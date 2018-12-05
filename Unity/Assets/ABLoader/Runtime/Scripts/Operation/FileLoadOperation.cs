@@ -44,7 +44,11 @@ namespace ILib.AssetBundles
 		protected override void Abort(System.Action onAbort)
 		{
 			m_abort = true;
-			if (m_loading == null) onAbort();
+			if (m_loading == null)
+			{
+				onAbort();
+				return;
+			}
 			var op = m_loading;
 			m_loading = null;
 			op.completed += (o) =>

@@ -110,7 +110,12 @@ namespace ILib.AssetBundles
 				onComplete?.Invoke();
 				return new WaitUntil(() => true);
 			}
-			return s_instance.Stop(() => { s_instance = null; onComplete?.Invoke(); });
+			return s_instance.Stop(() =>
+			{
+				s_instance = null;
+				Cache.Reset();
+				onComplete?.Invoke();
+			});
 		}
 
 		/// <summary>
@@ -120,7 +125,11 @@ namespace ILib.AssetBundles
 		public static CustomYieldInstruction CacheClear(Action onComplete = null)
 		{
 			LogAssert(s_instance != null);
-			return s_instance.CacheClear(onComplete);
+			return s_instance.CacheClear(() =>
+			{
+				Cache.Reset();
+				onComplete?.Invoke();
+			});
 		}
 
 		/// <summary>
