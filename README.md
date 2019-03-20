@@ -1,3 +1,5 @@
+# ilib-abloader
+Unity AssetBundle Loader Package
 
 コルーチン及びUpdateを使わない形のアセットバンドルのローダーです。  
 内部的にコールバック地獄になっているので、バグに対する耐久が低い点と解放漏れをやらかしてリークしやすいのが特徴です。  

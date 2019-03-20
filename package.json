@@ -1,0 +1,11 @@
+{
+  "name": "jp.yazawa-ichio.ilib-abloader",
+  "displayName":  "ILib.AssetBundleLoader",
+  "version": "0.1.1",
+  "unity": "2018.3",
+  "description": "Unity AssetBundle Loader Package.",
+  "keywords": [ "assetbundle" ],
+  "Author": "yazawa-ichio (yazawa922473@gmail.com)",
+  "dependencies": {
+  }
+}
