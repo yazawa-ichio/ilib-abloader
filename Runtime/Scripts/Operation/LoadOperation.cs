@@ -6,10 +6,10 @@ namespace ILib.AssetBundles
 {
 	public abstract class LoadOperation : IRequest
 	{
-		ABLoaderInstance m_owner;
-		internal System.Action<BundleRef> onSuccess;
-		internal System.Action<System.Exception> onFail;
-		IRequestHander m_hander;
+		ABLoaderInstance m_Owner;
+		internal System.Action<BundleRef> OnSuccess;
+		internal System.Action<System.Exception> OnFail;
+		IRequestHander m_Hander;
 
 		public string Name { get; private set; }
 		public string Hash { get; private set; }
@@ -19,12 +19,12 @@ namespace ILib.AssetBundles
 		{
 			this.Name = name;
 			this.Hash = hash;
-			m_owner = owner;
+			m_Owner = owner;
 		}
 
 		void IRequest.SetHander(IRequestHander hander)
 		{
-			m_hander = hander;
+			m_Hander = hander;
 		}
 
 		void IRequest.DoStart()
@@ -50,10 +50,10 @@ namespace ILib.AssetBundles
 		protected void Success(AssetBundle bundle)
 		{
 			IsRunning = false;
-			m_hander.OnComplete(this);
-			var bundleRef = m_owner.CreateBundleRef(Name, bundle);
+			m_Hander.OnComplete(this);
+			var bundleRef = m_Owner.CreateBundleRef(Name, bundle);
 			bundleRef.AddRef();
-			onSuccess(bundleRef);
+			OnSuccess(bundleRef);
 			bundleRef.RemoveRef();
 		}
 
@@ -61,8 +61,8 @@ namespace ILib.AssetBundles
 		{
 			IsRunning = false;
 			Cache.TryDelete(Name, Hash);
-			m_hander.OnComplete(this);
-			onFail(ex);
+			m_Hander.OnComplete(this);
+			OnFail(ex);
 		}
 
 	}

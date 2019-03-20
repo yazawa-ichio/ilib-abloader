@@ -4,49 +4,47 @@ using UnityEngine;
 
 namespace ILib.AssetBundles
 {
-	internal class BundleRef
+	internal class BundleRef : System.IDisposable
 	{
-		ABLoaderInstance m_owner;
-		AssetBundle m_bundle;
-		int m_count;
-		bool m_unloadAll;
+		ABLoaderInstance m_Owner;
+		AssetBundle m_Bundle;
+		int m_Count;
+		bool m_UnloadAll;
 
 		public string Name { get; private set; }
-		public AssetBundle Bundle { get { return m_bundle; } }
+		public AssetBundle Bundle { get { return m_Bundle; } }
+		public bool HasRef { get { return m_Count > 0; } }
 
 		public BundleRef(ABLoaderInstance owner, string name, AssetBundle bundle)
 		{
-			m_owner = owner;
+			m_Owner = owner;
 			Name = name;
-			m_bundle = bundle;
+			m_Bundle = bundle;
 		}
 
 		public void AddRef()
 		{
-			m_count++;
+			m_Count++;
 		}
 
 		public void RemoveRef()
 		{
-			m_count--;
-			if (m_count <= 0 && m_bundle != null)
+			m_Count--;
+			if (m_Count <= 0 && m_Bundle != null)
 			{
-				m_bundle.Unload(m_unloadAll);
-				m_bundle = null;
-				m_owner.UnloadRef(this);
+				m_Owner.UnloadRef(this);
 			}
 		}
 
 		public void SetUnloadAll(bool unloadAll)
 		{
-			m_unloadAll = unloadAll;
+			m_UnloadAll = unloadAll;
 		}
 
-		public void Unload()
+		public void Dispose()
 		{
-			m_bundle?.Unload(m_unloadAll);
-			m_bundle = null;
+			m_Bundle.Unload(m_UnloadAll);
+			m_Bundle = null;
 		}
-
 	}
 }

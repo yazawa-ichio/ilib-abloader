@@ -12,15 +12,15 @@ namespace ILib.AssetBundles
 
 	public class EditorContainer : IBundleContainer
 	{
-		string m_name;
+		string m_Name;
 		public EditorContainer(string name)
 		{
-			m_name = name;
+			m_Name = name;
 		}
 
 		public T LoadAsset<T>(string assetName) where T : UnityEngine.Object
 		{
-			var paths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(m_name, assetName);
+			var paths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(m_Name, assetName);
 			return paths.Length > 0 ? AssetDatabase.LoadAssetAtPath<T>(paths[0]) : null;
 		}
 
@@ -31,7 +31,7 @@ namespace ILib.AssetBundles
 
 		public void LoadScene(string sceneName, LoadSceneMode mode)
 		{
-			var paths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(m_name, sceneName);
+			var paths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(m_Name, sceneName);
 			if (paths.Length == 0) return;
 			LoadSceneParameters parameters = new LoadSceneParameters(mode);
 			EditorSceneManager.LoadSceneInPlayMode(paths[0], parameters);
@@ -39,7 +39,7 @@ namespace ILib.AssetBundles
 
 		public void LoadSceneAsync(string sceneName, LoadSceneMode mode, Action onSuccess)
 		{
-			var paths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(m_name, sceneName);
+			var paths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(m_Name, sceneName);
 			if (paths.Length == 0)
 			{
 				onSuccess?.Invoke();

@@ -11,52 +11,61 @@ namespace ILib.AssetBundles
 	/// </summary>
 	public class BundleContainerRef : System.IDisposable
 	{
-		IBundleContainer m_container;
-		bool m_disposed = false;
-		public bool Disposed { get { return m_disposed; } }
+		IBundleContainer m_Container;
+		bool m_Disposed = false;
+		public bool Disposed { get { return m_Disposed; } }
 
 		internal BundleContainerRef(IBundleContainer container)
 		{
-			m_container = container;
+			m_Container = container;
+		}
+
+		~BundleContainerRef()
+		{
+			if (ABLoader.UnloadMode != UnloadMode.Immediately)
+			{
+				Dispose();
+			}
 		}
 
 		public void SetUnloadAll(bool unloadAll, bool depend = false)
 		{
-			m_container.SetUnloadAll(unloadAll, depend);
+			m_Container.SetUnloadAll(unloadAll, depend);
 		}
 
 		public void Dispose()
 		{
-			if (m_disposed)
+			if (m_Disposed)
 			{
 				return;
 			}
-			m_disposed = true;
-			m_container.RemoveRef();
+			m_Disposed = true;
+			m_Container.RemoveRef();
+			System.GC.SuppressFinalize(this);
 		}
 
 		public T LoadAsset<T>(string assetName) where T : UnityEngine.Object
 		{
-			if (m_disposed) throw new System.InvalidOperationException("disposed bundle container ref");
-			return m_container.LoadAsset<T>(assetName);
+			if (m_Disposed) throw new System.InvalidOperationException("disposed bundle container ref");
+			return m_Container.LoadAsset<T>(assetName);
 		}
 
 		public void LoadAssetAsync<T>(string assetName, System.Action<T> onSuccess) where T : UnityEngine.Object
 		{
-			if (m_disposed) throw new System.InvalidOperationException("disposed bundle container ref");
-			m_container.LoadAssetAsync<T>(assetName, onSuccess);
+			if (m_Disposed) throw new System.InvalidOperationException("disposed bundle container ref");
+			m_Container.LoadAssetAsync<T>(assetName, onSuccess);
 		}
 
 		public void LoadScene(string sceneName, UnityEngine.SceneManagement.LoadSceneMode mode)
 		{
-			if (m_disposed) throw new System.InvalidOperationException("disposed bundle container ref");
-			m_container.LoadScene(sceneName, mode);
+			if (m_Disposed) throw new System.InvalidOperationException("disposed bundle container ref");
+			m_Container.LoadScene(sceneName, mode);
 		}
 
 		public void LoadSceneAsync(string sceneName, UnityEngine.SceneManagement.LoadSceneMode mode, System.Action onSuccess)
 		{
-			if (m_disposed) throw new System.InvalidOperationException("disposed bundle container ref");
-			m_container.LoadSceneAsync(sceneName, mode, onSuccess);
+			if (m_Disposed) throw new System.InvalidOperationException("disposed bundle container ref");
+			m_Container.LoadSceneAsync(sceneName, mode, onSuccess);
 		}
 
 	}

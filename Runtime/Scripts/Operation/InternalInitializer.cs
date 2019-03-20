@@ -6,16 +6,16 @@ namespace ILib.AssetBundles
 {
 	public class InternalInitializer : Initializer
 	{
-		string m_loadPath;
+		string m_LoadPath;
 
 		public InternalInitializer(string loadPath)
 		{
-			m_loadPath = loadPath;
+			m_LoadPath = loadPath;
 		}
 
 		protected override void Start()
 		{
-			Load(m_loadPath);
+			Load(m_LoadPath);
 		}
 
 	}

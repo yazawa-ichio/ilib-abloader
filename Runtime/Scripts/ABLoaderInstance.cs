@@ -14,22 +14,23 @@ namespace ILib.AssetBundles
 
 		public ABLoaderState State { get; private set; } = ABLoaderState.None;
 
-		IBundleData m_bundleData;
-		ILoadOperator m_loadOperator;
-		RequestHander<DownloadRequest> m_downloader;
-		RequestHander<LoadOperation> m_loader;
-		Dictionary<string, BundleContainer> m_container = new Dictionary<string, BundleContainer>();
-		Dictionary<string, BundleRef> m_loadedBundles = new Dictionary<string, BundleRef>();
+		IBundleData m_BundleData;
+		ILoadOperator m_LoadOperator;
+		RequestHander<DownloadRequest> m_Downloader;
+		RequestHander<LoadOperation> m_Loader;
+		Dictionary<string, BundleContainer> m_Container = new Dictionary<string, BundleContainer>();
+		Dictionary<string, BundleRef> m_LoadedBundles = new Dictionary<string, BundleRef>();
+		List<BundleRef> m_UnloadList = new List<BundleRef>();
 
 
 		public void SetMaxDownloadCount(int count)
 		{
-			m_downloader.MaxCount = count;
+			m_Downloader.MaxCount = count;
 		}
 
 		public void SeMaxLoadCount(int count)
 		{
-			m_loader.MaxCount = count;
+			m_Loader.MaxCount = count;
 		}
 
 		public CustomYieldInstruction Initialize(ILoadOperator loadOperator, int maxDownloadCount, int maxLoadCount, Action onSuccess, Action<Exception> onFail)
@@ -47,9 +48,9 @@ namespace ILib.AssetBundles
 
 			State = ABLoaderState.Initialize;
 			Cache.Init(loadOperator);
-			m_loadOperator = loadOperator;
-			m_downloader = new RequestHander<DownloadRequest>(maxDownloadCount);
-			m_loader = new RequestHander<LoadOperation>(maxLoadCount);
+			m_LoadOperator = loadOperator;
+			m_Downloader = new RequestHander<DownloadRequest>(maxDownloadCount);
+			m_Loader = new RequestHander<LoadOperation>(maxLoadCount);
 
 #if UNITY_EDITOR
 			if (ABLoader.UseEditorAsset)
@@ -60,7 +61,7 @@ namespace ILib.AssetBundles
 				return wait;
 			}
 #endif
-			var initializer = m_loadOperator.Init();
+			var initializer = m_LoadOperator.Init();
 			initializer.AddCompleteEvent((data, ex) =>
 			{
 				complete = true;
@@ -72,7 +73,7 @@ namespace ILib.AssetBundles
 				else if (data != null)
 				{
 					State = ABLoaderState.Active;
-					m_bundleData = data;
+					m_BundleData = data;
 					onSuccess?.Invoke();
 				}
 			});
@@ -86,20 +87,24 @@ namespace ILib.AssetBundles
 			bool complete = false;
 			State = ABLoaderState.Abort;
 			//ダウンロードの中断は即実行される
-			m_downloader.Abort(() =>
+			m_Downloader.Abort(() =>
 			{
-				m_loader.Abort(() =>
+				m_Loader.Abort(() =>
 				{
-					foreach (var bundleRef in m_loadedBundles.Values)
+					lock (m_UnloadList)
 					{
-						bundleRef.Unload();
+						m_UnloadList.Clear();
 					}
-					m_loadedBundles.Clear();
-					foreach (var container in m_container.Values.ToArray())
+					foreach (var bundleRef in m_LoadedBundles.Values)
+					{
+						bundleRef.Dispose();
+					}
+					m_LoadedBundles.Clear();
+					foreach (var container in m_Container.Values.ToArray())
 					{
 						container.Dispose();
 					}
-					m_container.Clear();
+					m_Container.Clear();
 					State = ABLoaderState.Stop;
 					complete = true;
 					onComplete?.Invoke();
@@ -119,13 +124,13 @@ namespace ILib.AssetBundles
 
 		public bool IsCache(string name)
 		{
-			if (m_downloader.HasRequest(name)) return false;
-			return System.IO.File.Exists(Cache.GetLoadPath(name, m_bundleData.GetHash(name)));
+			if (m_Downloader.HasRequest(name)) return false;
+			return System.IO.File.Exists(Cache.GetLoadPath(name, m_BundleData.GetHash(name)));
 		}
 
 		public bool IsCache(string name, string hash)
 		{
-			if (m_downloader.HasRequest(name)) return false;
+			if (m_Downloader.HasRequest(name)) return false;
 			return System.IO.File.Exists(Cache.GetLoadPath(name, hash));
 		}
 
@@ -136,7 +141,7 @@ namespace ILib.AssetBundles
 			{
 				var name = names[i];
 				list.Add(name);
-				list.UnionWith(m_bundleData.GetAllDepends(name));
+				list.UnionWith(m_BundleData.GetAllDepends(name));
 			}
 			return list;
 		}
@@ -145,8 +150,8 @@ namespace ILib.AssetBundles
 		{
 			return GetIncludedDependList(names).Where(x =>
 			{
-				string hash = m_bundleData.GetHash(x);
-				return m_loadOperator.IsDownload(x, hash) && !IsCache(x, hash);
+				string hash = m_BundleData.GetHash(x);
+				return m_LoadOperator.IsDownload(x, hash) && !IsCache(x, hash);
 			}).ToArray();
 		}
 
@@ -159,7 +164,7 @@ namespace ILib.AssetBundles
 			long size = 0;
 			for (int i = 0; i < names.Length; i++)
 			{
-				size += m_bundleData.GetSize(names[i]);
+				size += m_BundleData.GetSize(names[i]);
 			}
 			return size;
 		}
@@ -182,7 +187,7 @@ namespace ILib.AssetBundles
 				for (int i = 0; i < count; i++)
 				{
 					var req = requests[i];
-					if (req != null) sum += req.GetProgress() * m_bundleData.GetSize(req.name);
+					if (req != null) sum += req.GetProgress() * m_BundleData.GetSize(req.Name);
 				}
 				return (float)(sum / size);
 			};
@@ -210,8 +215,8 @@ namespace ILib.AssetBundles
 			for (int i = 0; i < names.Length; i++)
 			{
 				var name = names[i];
-				var hash = m_bundleData.GetHash(name);
-				var url = m_loadOperator.RequestUrl(name, hash);
+				var hash = m_BundleData.GetHash(name);
+				var url = m_LoadOperator.RequestUrl(name, hash);
 				requests[i] = DownloadRequest(url, name, hash, onSuccessOnce, onFailOnce);
 			}
 
@@ -222,23 +227,23 @@ namespace ILib.AssetBundles
 		{
 
 			BundleContainer container;
-			if (m_container.TryGetValue(name, out container))
+			if (m_Container.TryGetValue(name, out container))
 			{
 				container.SetEvent(onSuccess, onFail);
 				return;
 			}
 
-			var deps = m_bundleData.GetAllDepends(name);
+			var deps = m_BundleData.GetAllDepends(name);
 			container = new BundleContainer(name, deps.Length, this);
 			container.SetEvent(onSuccess, onFail);
 
 			Action<BundleRef> onLoad = container.OnLoad;
 			Action<Exception> onLoadFail = container.OnFail;
 
-			Request(name, m_bundleData.GetHash(name), onLoad, onLoadFail);
+			Request(name, m_BundleData.GetHash(name), onLoad, onLoadFail);
 			for (int i = 0; i < deps.Length; i++)
 			{
-				Request(deps[i], m_bundleData.GetHash(deps[i]), onLoad, onLoadFail);
+				Request(deps[i], m_BundleData.GetHash(deps[i]), onLoad, onLoadFail);
 			}
 		}
 
@@ -246,7 +251,7 @@ namespace ILib.AssetBundles
 		{
 			//ロード済だったらすぐに返す
 			BundleRef bundleRef = null;
-			if (m_loadedBundles.TryGetValue(name, out bundleRef))
+			if (m_LoadedBundles.TryGetValue(name, out bundleRef))
 			{
 				ABLoader.LogAssert(bundleRef != null);
 				if (bundleRef.Bundle != null)
@@ -257,17 +262,17 @@ namespace ILib.AssetBundles
 				else
 				{
 					//管理していない形でアンロードされた
-					m_loadedBundles.Remove(name);
+					m_LoadedBundles.Remove(name);
 				}
 			}
 
-			if (!m_loadOperator.IsDownload(name, hash) || IsCache(name, hash))
+			if (!m_LoadOperator.IsDownload(name, hash) || IsCache(name, hash))
 			{
 				LoadRequest(name, hash, onLoad, onFail);
 			}
 			else
 			{
-				var url = m_loadOperator.RequestUrl(name, hash);
+				var url = m_LoadOperator.RequestUrl(name, hash);
 				DownloadRequest(url, name, hash, () => LoadRequest(name, hash, onLoad, onFail), onFail);
 			}
 		}
@@ -276,28 +281,28 @@ namespace ILib.AssetBundles
 		{
 			//リクエスト済みなら連結
 			LoadOperation op;
-			if (m_loader.TryGetRequset(name, out op))
+			if (m_Loader.TryGetRequset(name, out op))
 			{
-				op.onSuccess += onLoad;
-				op.onFail += onFail;
+				op.OnSuccess += onLoad;
+				op.OnFail += onFail;
 				return;
 			}
 
-			op = m_loadOperator.Load(name, hash);
+			op = m_LoadOperator.Load(name, hash);
 			op.Init(name, hash, this);
-			op.onSuccess += onLoad;
-			op.onFail += onFail;
-			m_loader.Request(op);
+			op.OnSuccess += onLoad;
+			op.OnFail += onFail;
+			m_Loader.Request(op);
 
 		}
 
 		DownloadRequest DownloadRequest(string url, string name, string hash, Action onSuccess, Action<Exception> onFail)
 		{
 			DownloadRequest req = null;
-			if (m_downloader.TryGetRequset(name, out req))
+			if (m_Downloader.TryGetRequset(name, out req))
 			{
-				req.onSuccess += onSuccess;
-				req.onFail += onFail;
+				req.OnSuccess += onSuccess;
+				req.OnFail += onFail;
 				return req;
 			}
 
@@ -312,31 +317,60 @@ namespace ILib.AssetBundles
 			//リクエストを作成
 			req = new DownloadRequest
 			{
-				name = name,
-				url = url,
-				cachePath = Cache.GetLoadPath(name, hash),
-				onSuccess = onSuccess,
-				onFail = onFail,
+				Name = name,
+				Url = url,
+				CachePath = Cache.GetLoadPath(name, hash),
+				OnSuccess = onSuccess,
+				OnFail = onFail,
 			};
 
-			m_downloader.Request(req);
+			m_Downloader.Request(req);
 
 			return req;
 		}
 
+		internal void Unload()
+		{
+			lock (m_UnloadList)
+			{
+				foreach (var bundleRef in m_UnloadList)
+				{
+					if (!bundleRef.HasRef)
+					{
+						m_LoadedBundles.Remove(bundleRef.Name);
+						bundleRef.Dispose();
+					}
+				}
+				m_UnloadList.Clear();
+			}
+		}
+
 		internal BundleRef CreateBundleRef(string name, AssetBundle bundle)
 		{
-			return m_loadedBundles[name] = new BundleRef(this, name, bundle);
+			return m_LoadedBundles[name] = new BundleRef(this, name, bundle);
 		}
 
 		internal void UnloadRef(BundleRef bundleRef)
 		{
-			m_loadedBundles.Remove(bundleRef.Name);
+			switch (ABLoader.UnloadMode)
+			{
+				case UnloadMode.Immediately:
+					m_LoadedBundles.Remove(bundleRef.Name);
+					bundleRef.Dispose();
+					break;
+				case UnloadMode.Manual:
+				case UnloadMode.Auto:
+					lock (m_UnloadList)
+					{
+						m_UnloadList.Add(bundleRef);
+					}
+					break;
+			}
 		}
 
 		internal void UnloadContainer(BundleContainer container)
 		{
-			m_container.Remove(container.Name);
+			m_Container.Remove(container.Name);
 		}
 
 	}

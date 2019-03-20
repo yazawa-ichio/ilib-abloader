@@ -8,23 +8,23 @@ namespace ILib.AssetBundles
 
 	public class NetworkLoadOperator : ILoadOperator
 	{
-		string m_url;
-		string m_cache;
-		string m_manifest;
-		string m_version;
+		string m_Url;
+		string m_Cache;
+		string m_Manifest;
+		string m_Version;
 
 		public NetworkLoadOperator(string url, string cache, string manifest, string version)
 		{
-			m_url = url;
-			m_cache = cache;
-			m_manifest = manifest;
-			m_version = version;
+			m_Url = url;
+			m_Cache = cache;
+			m_Manifest = manifest;
+			m_Version = version;
 		}
 
 		public Initializer Init()
 		{
-			var url = RequestUrl(m_manifest, m_version);
-			return new NetworkInitializer(url, m_version);
+			var url = RequestUrl(m_Manifest, m_Version);
+			return new NetworkInitializer(url, m_Version);
 		}
 
 		public bool IsDownload(string name, string hash)
@@ -34,18 +34,18 @@ namespace ILib.AssetBundles
 
 		public string RequestUrl(string name, string hash)
 		{
-			return $"{m_url}/{name}?hash={hash}";
+			return $"{m_Url}/{name}?hash={hash}";
 		}
 
 		public string GetCacheRoot()
 		{
-			return m_cache;
+			return m_Cache;
 		}
 
 		public string LoadPath(string name, string hash)
 		{
 			//_∩(@_@)彡
-			return Path.Combine(m_cache, name + "@_@" + hash);
+			return Path.Combine(m_Cache, name + "@_@" + hash);
 		}
 
 		public LoadOperation Load(string name, string hash)

@@ -55,11 +55,11 @@ namespace ILib.AssetBundles
 		{
 			var request = new DownloadRequest
 			{
-				name = name,
-				url = url,
-				cachePath = cachePath,
-				onSuccess = onSuccess,
-				onFail = Fail,
+				Name = name,
+				Url = url,
+				CachePath = cachePath,
+				OnSuccess = onSuccess,
+				OnFail = Fail,
 			};
 			request.DoStart();
 		}

@@ -24,37 +24,37 @@ namespace ILib.AssetBundles
 	{
 
 		public string Name { get; private set; }
-		BundleRef m_bundleRef;
-		BundleRef[] m_deps;
-		bool m_disposed;
-		int m_refCount;
-		int m_depLength;
-		int m_depCount;
-		ABLoaderInstance m_owner;
-		bool m_success;
-		bool m_error;
-		List<Action<BundleContainerRef>> m_onSuccess = new List<System.Action<BundleContainerRef>>(1);
-		Action<Exception> m_onFail;
+		BundleRef m_BundleRef;
+		BundleRef[] m_Deps;
+		bool m_Disposed;
+		int m_RefCount;
+		int m_DepLength;
+		int m_DepCount;
+		ABLoaderInstance m_Owner;
+		bool m_Success;
+		bool m_Error;
+		List<Action<BundleContainerRef>> m_OnSuccess = new List<System.Action<BundleContainerRef>>(1);
+		Action<Exception> m_OnFail;
 
 		internal BundleContainer(string name, int depLength, ABLoaderInstance owner)
 		{
-			m_owner = owner;
+			m_Owner = owner;
 			Name = name;
-			m_depLength = depLength;
+			m_DepLength = depLength;
 			if (depLength > 0)
 			{
-				m_deps = new BundleRef[depLength];
+				m_Deps = new BundleRef[depLength];
 			}
 		}
 
 		internal AssetBundle GetBundle()
 		{
-			return m_bundleRef.Bundle;
+			return m_BundleRef.Bundle;
 		}
 
 		internal void SetEvent(Action<BundleContainerRef> onSuccess, Action<Exception> onFail)
 		{
-			if (m_success)
+			if (m_Success)
 			{
 				TrySuccess(onSuccess);
 				return;
@@ -63,30 +63,30 @@ namespace ILib.AssetBundles
 			{
 				if (onSuccess != null)
 				{
-					m_onSuccess.Add(onSuccess);
+					m_OnSuccess.Add(onSuccess);
 				}
-				m_onFail += onFail;
+				m_OnFail += onFail;
 			}
 		}
 
 
 		public void OnLoad(BundleRef bundle)
 		{
-			if (m_error || m_disposed)
+			if (m_Error || m_Disposed)
 			{
 				return;
 			}
 			bundle.AddRef();
 			if (Name == bundle.Name)
 			{
-				m_bundleRef = bundle;
+				m_BundleRef = bundle;
 			}
 			else
 			{
-				m_deps[m_depCount++] = bundle;
+				m_Deps[m_DepCount++] = bundle;
 			}
 			//ロード済みかチェック
-			if (m_bundleRef != null && m_depLength == m_depCount)
+			if (m_BundleRef != null && m_DepLength == m_DepCount)
 			{
 				Success();
 			}
@@ -94,19 +94,19 @@ namespace ILib.AssetBundles
 
 		void Success()
 		{
-			m_success = true;
-			if (m_onSuccess.Count == 0)
+			m_Success = true;
+			if (m_OnSuccess.Count == 0)
 			{
 				Dispose();
 				return;
 			}
 			using (CreateRef())
 			{
-				foreach (var onSuccess in m_onSuccess)
+				foreach (var onSuccess in m_OnSuccess)
 				{
 					TrySuccess(onSuccess);
 				}
-				m_onSuccess.Clear();
+				m_OnSuccess.Clear();
 			}
 		}
 
@@ -121,64 +121,64 @@ namespace ILib.AssetBundles
 			catch (Exception ex)
 			{
 				//例外を吐いた場合は即解放
-				ABLoader.LogError(ex);
 				containerRef.Dispose();
+				ABLoader.LogError(ex);
 			}
 		}
 
 		public void OnFail(Exception ex)
 		{
-			if (m_error)
+			if (m_Error)
 			{
 				return;
 			}
-			m_error = true;
+			m_Error = true;
 			Dispose();
-			m_onFail?.Invoke(ex);
+			m_OnFail?.Invoke(ex);
 		}
 
 		public void SetUnloadAll(bool unloadAll, bool depend = false)
 		{
-			m_bundleRef.SetUnloadAll(unloadAll);
-			if (depend && m_deps != null)
+			m_BundleRef.SetUnloadAll(unloadAll);
+			if (depend && m_Deps != null)
 			{
-				for (int i = 0; i < m_deps.Length; i++)
+				for (int i = 0; i < m_Deps.Length; i++)
 				{
-					m_deps[i].SetUnloadAll(unloadAll);
+					m_Deps[i].SetUnloadAll(unloadAll);
 				}
 			}
 		}
 
 		public void Dispose()
 		{
-			if (m_disposed)
+			if (m_Disposed)
 			{
 				return;
 			}
-			m_disposed = true;
-			m_owner.UnloadContainer(this);
-			m_bundleRef?.RemoveRef();
-			if (m_deps != null)
+			m_Disposed = true;
+			m_Owner.UnloadContainer(this);
+			m_BundleRef?.RemoveRef();
+			if (m_Deps != null)
 			{
-				for (int i = 0; i < m_deps.Length; i++)
+				for (int i = 0; i < m_Deps.Length; i++)
 				{
-					m_deps[i]?.RemoveRef();
+					m_Deps[i]?.RemoveRef();
 				}
 			}
-			m_bundleRef = null;
-			m_deps = null;
+			m_BundleRef = null;
+			m_Deps = null;
 		}
 
 		BundleContainerRef CreateRef()
 		{
-			m_refCount++;
+			m_RefCount++;
 			return new BundleContainerRef(this);
 		}
 
 		void IBundleContainer.RemoveRef()
 		{
-			m_refCount--;
-			if (m_refCount <= 0)
+			m_RefCount--;
+			if (m_RefCount <= 0)
 			{
 				Dispose();
 			}

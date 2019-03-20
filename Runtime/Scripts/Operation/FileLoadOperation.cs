@@ -8,9 +8,9 @@ namespace ILib.AssetBundles
 	public class FileLoadOperation : LoadOperation
 	{
 
-		bool m_abort;
-		bool m_error;
-		AssetBundleCreateRequest m_loading;
+		bool m_Abort;
+		bool m_Error;
+		AssetBundleCreateRequest m_Loading;
 
 		protected override void Start()
 		{
@@ -19,17 +19,17 @@ namespace ILib.AssetBundles
 
 		protected void SetLoadRequst(AssetBundleCreateRequest req)
 		{
-			m_loading = req;
-			m_loading.completed += op => OnLoad();
+			m_Loading = req;
+			m_Loading.completed += op => OnLoad();
 		}
 
 		void OnLoad()
 		{
-			if (m_abort)
+			if (m_Abort)
 			{
 				return;
 			}
-			var assetBundle = m_loading.assetBundle;
+			var assetBundle = m_Loading.assetBundle;
 			if (assetBundle != null)
 			{
 				Success(assetBundle);
@@ -38,19 +38,19 @@ namespace ILib.AssetBundles
 			{
 				Fail(new System.Exception("load fail."));
 			}
-			m_loading = null;
+			m_Loading = null;
 		}
 
 		protected override void Abort(System.Action onAbort)
 		{
-			m_abort = true;
-			if (m_loading == null)
+			m_Abort = true;
+			if (m_Loading == null)
 			{
 				onAbort();
 				return;
 			}
-			var op = m_loading;
-			m_loading = null;
+			var op = m_Loading;
+			m_Loading = null;
 			op.completed += (o) =>
 			{
 				op.assetBundle?.Unload(false);

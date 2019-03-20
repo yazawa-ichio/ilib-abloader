@@ -18,15 +18,15 @@ namespace ILib.AssetBundles
 	public static class ABLoader
 	{
 
-		static ABLoaderInstance s_instance;
+		static ABLoaderInstance s_Instance;
 
 		/// <summary>
 		/// 初期化済みか？
 		/// </summary>
-		public static bool Initialized => (s_instance != null && s_instance.State == ABLoaderState.Active);
+		public static bool Initialized => (s_Instance != null && s_Instance.State == ABLoaderState.Active);
 
 #if UNITY_EDITOR
-		private static bool s_useEditorAsset;
+		private static bool s_UseEditorAsset;
 
 		/// <summary>
 		/// エディタ上のアセットを直接読み込みます。
@@ -34,16 +34,16 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static bool UseEditorAsset
 		{
-			get { return s_useEditorAsset; }
+			get { return s_UseEditorAsset; }
 			set
 			{
-				if (s_instance != null) throw new InvalidOperationException("before Initialize().");
-				s_useEditorAsset = value;
+				if (s_Instance != null) throw new InvalidOperationException("before Initialize().");
+				s_UseEditorAsset = value;
 			}
 		}
 #endif
 
-		static int s_maxDownloadCount = 5;
+		static int s_MaxDownloadCount = 5;
 		/// <summary>
 		/// 同時ダウンロード数です。
 		/// 現在値よりも低い値を設定した場合、適応されるのに遅延があります。
@@ -51,11 +51,11 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static int MaxDownloadCount
 		{
-			get { return s_maxDownloadCount; }
-			set { s_maxDownloadCount = value; s_instance?.SetMaxDownloadCount(value); }
+			get { return s_MaxDownloadCount; }
+			set { s_MaxDownloadCount = value; s_Instance?.SetMaxDownloadCount(value); }
 		}
 
-		static int s_maxLoadCount = 10;
+		static int s_MaxLoadCount = 10;
 		/// <summary>
 		/// 同時ロード数です。
 		/// 現在値よりも低い値を設定した場合、適応されるのに遅延があります。
@@ -63,8 +63,23 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static int MaxLoadCount
 		{
-			get { return s_maxLoadCount; }
-			set { s_maxLoadCount = value; s_instance?.SeMaxLoadCount(value); }
+			get { return s_MaxLoadCount; }
+			set { s_MaxLoadCount = value; s_Instance?.SeMaxLoadCount(value); }
+		}
+
+		static UnloadMode s_UnloadMode = UnloadMode.Auto;
+		/// <summary>
+		/// アンロードのモードです。
+		/// デフォルトは自動破棄になります。
+		/// </summary>
+		public static UnloadMode UnloadMode
+		{
+			get { return s_UnloadMode; }
+			set
+			{
+				s_UnloadMode = value;
+				AutoUnloader.ChangeModel(value);
+			}
 		}
 
 
@@ -95,8 +110,9 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static CustomYieldInstruction Initialize(ILoadOperator loadOperator, Action onSuccess, Action<Exception> onFail)
 		{
-			if (s_instance == null) s_instance = new ABLoaderInstance();
-			return s_instance.Initialize(loadOperator, s_maxDownloadCount, s_maxLoadCount, onSuccess, onFail);
+			AutoUnloader.ChangeModel(s_UnloadMode);
+			if (s_Instance == null) s_Instance = new ABLoaderInstance();
+			return s_Instance.Initialize(loadOperator, s_MaxDownloadCount, s_MaxLoadCount, onSuccess, onFail);
 		}
 
 		/// <summary>
@@ -105,14 +121,14 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static CustomYieldInstruction Stop(Action onComplete = null)
 		{
-			if (s_instance == null)
+			if (s_Instance == null)
 			{
 				onComplete?.Invoke();
 				return new WaitUntil(() => true);
 			}
-			return s_instance.Stop(() =>
+			return s_Instance.Stop(() =>
 			{
-				s_instance = null;
+				s_Instance = null;
 				Cache.Reset();
 				onComplete?.Invoke();
 			});
@@ -124,8 +140,8 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static CustomYieldInstruction CacheClear(Action onComplete = null)
 		{
-			LogAssert(s_instance != null);
-			return s_instance.CacheClear(() =>
+			LogAssert(s_Instance != null);
+			return s_Instance.CacheClear(() =>
 			{
 				Cache.Reset();
 				onComplete?.Invoke();
@@ -140,7 +156,7 @@ namespace ILib.AssetBundles
 #if UNITY_EDITOR
 			if (UseEditorAsset) return true;
 #endif
-			return s_instance.IsCache(name);
+			return s_Instance.IsCache(name);
 		}
 
 		/// <summary>
@@ -153,7 +169,7 @@ namespace ILib.AssetBundles
 #if UNITY_EDITOR
 			if (UseEditorAsset) return 0;
 #endif
-			return s_instance.GetSize(names, ignoreDpend);
+			return s_Instance.GetSize(names, ignoreDpend);
 		}
 
 		/// <summary>
@@ -165,8 +181,8 @@ namespace ILib.AssetBundles
 #if UNITY_EDITOR
 			if (UseEditorAsset) return 0;
 #endif
-			names = s_instance.GetDownloadList(names);
-			return s_instance.GetSize(names);
+			names = s_Instance.GetDownloadList(names);
+			return s_Instance.GetSize(names);
 		}
 
 		/// <summary>
@@ -191,13 +207,13 @@ namespace ILib.AssetBundles
 				return () => 1;
 			}
 #endif
-			return s_instance.Download(names, onComplete, onFail);
+			return s_Instance.Download(names, onComplete, onFail);
 		}
 
 		/// <summary>
 		/// アセットバンドルをロードします。
 		/// BundleContainerRefからアセットをロードし、不要になった際にDisposeを実行してください。
-		/// Disposeを実行し忘れるとバンドルがリークします。逆にDiposeするまでバンドルはキャッシュされます。
+		/// UnloadMode.ImmediatelyモードでDisposeを実行し忘れるとバンドルがリークします。
 		/// </summary>
 		public static void LoadContainer(string name, Action<BundleContainerRef> onSuccess, Action<Exception> onFail)
 		{
@@ -223,7 +239,7 @@ namespace ILib.AssetBundles
 			}
 #endif
 
-			s_instance.LoadContainer(name, onSuccess, onFail);
+			s_Instance.LoadContainer(name, onSuccess, onFail);
 		}
 
 		/// <summary>
@@ -286,8 +302,13 @@ namespace ILib.AssetBundles
 			}, onFail);
 		}
 
+		public static void Unload()
+		{
+			s_Instance?.Unload();
+		}
+
 		static Action<Exception> s_onLogError;
-		static Action<string> s_onLogAssert;
+		static Action<string> s_OnLogAssert;
 
 		/// <summary>
 		/// 例外をハンドリングした際に吐き出すログを出力を指定します。
@@ -304,7 +325,7 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static void HandleAssert(Action<string> onAssert)
 		{
-			s_onLogAssert = onAssert;
+			s_OnLogAssert = onAssert;
 		}
 
 		internal static void LogError(Exception ex)
@@ -321,7 +342,7 @@ namespace ILib.AssetBundles
 
 		internal static void LogAssert(bool condition)
 		{
-			if (s_onLogAssert == null)
+			if (s_OnLogAssert == null)
 			{
 				Debug.Assert(condition);
 			}
@@ -329,13 +350,13 @@ namespace ILib.AssetBundles
 
 		internal static void LogAssert(bool condition, string message)
 		{
-			if (s_onLogAssert == null)
+			if (s_OnLogAssert == null)
 			{
 				Debug.Assert(condition, message);
 			}
 			else if (condition)
 			{
-				s_onLogAssert(message);
+				s_OnLogAssert(message);
 			}
 		}
 

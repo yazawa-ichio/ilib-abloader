@@ -7,25 +7,25 @@ namespace ILib.AssetBundles
 {
 	internal static class Cache
 	{
-		static ILoadOperator s_loadOperator;
+		static ILoadOperator s_LoadOperator;
 		public static void Init(ILoadOperator loadOperator)
 		{
-			s_loadOperator = loadOperator;
+			s_LoadOperator = loadOperator;
 		}
 
 		public static void Reset()
 		{
-			s_loadOperator = null;
+			s_LoadOperator = null;
 		}
 
 		public static string GetLoadPath(string name, string hash)
 		{
-			return s_loadOperator.LoadPath(name, hash);
+			return s_LoadOperator.LoadPath(name, hash);
 		}
 
 		public static void Delete(string name)
 		{
-			var path = s_loadOperator.LoadPath(name, "");
+			var path = s_LoadOperator.LoadPath(name, "");
 			var dir = Path.GetDirectoryName(path);
 			if (!Directory.Exists(dir))
 			{
@@ -55,7 +55,7 @@ namespace ILib.AssetBundles
 		{
 			try
 			{
-				if (!s_loadOperator.IsDownload(name, hash)) return null;
+				if (!s_LoadOperator.IsDownload(name, hash)) return null;
 				Delete(name);
 				return null;
 			}
@@ -68,7 +68,7 @@ namespace ILib.AssetBundles
 
 		public static void DeleteAll()
 		{
-			var path = s_loadOperator.GetCacheRoot();
+			var path = s_LoadOperator.GetCacheRoot();
 			if (Directory.Exists(path))
 			{
 				Directory.Delete(path, true);

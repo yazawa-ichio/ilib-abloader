@@ -23,66 +23,66 @@ namespace ILib.AssetBundles
 
 	internal class RequestHander<T> : IRequestHander where T : IRequest
 	{
-		Dictionary<string, T> m_requests = new Dictionary<string, T>();
-		Queue<T> m_requestQueue = new Queue<T>();
-		int m_processingCount = 0;
-		int m_maxCount;
+		Dictionary<string, T> m_Requests = new Dictionary<string, T>();
+		Queue<T> m_RequestQueue = new Queue<T>();
+		int m_ProcessingCount = 0;
+		int m_MaxCount;
 		public int MaxCount
 		{
-			get { return m_maxCount; }
+			get { return m_MaxCount; }
 			set
 			{
-				m_maxCount = value;
+				m_MaxCount = value;
 				TryNextRequest();
 			}
 		}
 
 		public RequestHander(int maxCount)
 		{
-			m_maxCount = maxCount;
+			m_MaxCount = maxCount;
 		}
 
 		public bool HasRequest(string name)
 		{
-			return m_requests.ContainsKey(name);
+			return m_Requests.ContainsKey(name);
 		}
 
 		public bool TryGetRequset(string name, out T request)
 		{
-			return m_requests.TryGetValue(name, out request);
+			return m_Requests.TryGetValue(name, out request);
 		}
 
 		public void Request(T request)
 		{
 			request.SetHander(this);
-			m_requests[request.Name] = request;
-			m_requestQueue.Enqueue(request);
+			m_Requests[request.Name] = request;
+			m_RequestQueue.Enqueue(request);
 			TryNextRequest();
 		}
 
 		public void OnComplete(IRequest request)
 		{
-			m_processingCount--;
-			m_requests.Remove(request.Name);
+			m_ProcessingCount--;
+			m_Requests.Remove(request.Name);
 			TryNextRequest();
 			request.Dispose();
 		}
 
 		void TryNextRequest()
 		{
-			while (m_requestQueue.Count > 0 && m_processingCount < m_maxCount)
+			while (m_RequestQueue.Count > 0 && m_ProcessingCount < m_MaxCount)
 			{
-				var req = m_requestQueue.Dequeue();
+				var req = m_RequestQueue.Dequeue();
 				req.DoStart();
-				m_processingCount++;
+				m_ProcessingCount++;
 			}
 		}
 
 		public void Abort(Action onAbort)
 		{
-			m_requestQueue.Clear();
-			var runningRequests = m_requests.Values.Where(op => op.IsRunning).ToArray();
-			m_requests.Clear();
+			m_RequestQueue.Clear();
+			var runningRequests = m_Requests.Values.Where(op => op.IsRunning).ToArray();
+			m_Requests.Clear();
 			if (runningRequests.Length == 0)
 			{
 				onAbort?.Invoke();
