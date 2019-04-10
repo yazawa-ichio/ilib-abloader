@@ -1,0 +1,17 @@
+{
+    "name": "ILib.AssetBundles.ExManifest.Tools",
+    "references": [
+        "ILib.AssetBundles.ExManifest.Editor",
+        "ILib.AssetBundles.NameSetter"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
