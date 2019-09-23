@@ -43,7 +43,10 @@ namespace ILib.AssetBundles
 
 		public void Dispose()
 		{
-			m_Bundle.Unload(m_UnloadAll);
+			if (m_Bundle != null)
+			{
+				m_Bundle.Unload(m_UnloadAll);
+			}
 			m_Bundle = null;
 		}
 	}

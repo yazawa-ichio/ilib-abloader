@@ -14,6 +14,10 @@ namespace ILib.AssetBundles.NameSetter
 			{
 				return;
 			}
+			if (!path.Contains(Application.dataPath))
+			{
+				return;
+			}
 			foreach (var root in SetterAssetCache.GetRootSetters<IImportContext>(path))
 			{
 				root.Import(path, assetImporter);
