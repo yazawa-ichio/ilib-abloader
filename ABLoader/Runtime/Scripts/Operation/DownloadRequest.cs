@@ -7,6 +7,8 @@ using UnityEngine.Networking;
 
 namespace ILib.AssetBundles
 {
+	using Logger;
+
 	//WebRequestとFile.IOを結び付けると至る所で例外を吐くのでtry-cache祭りを開催中
 
 	internal class DownloadRequest : IRequest
@@ -50,11 +52,14 @@ namespace ILib.AssetBundles
 				m_WebRequest?.Abort();
 				m_WebRequest = null;
 				var error = Cache.TryDelete(Name);
-				if (error != null) ABLoader.LogError(error);
+				if (error != null)
+				{
+					Log.Exception(error);
+				}
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
-				ABLoader.LogError(ex);
+				Log.Exception(ex);
 			}
 			finally
 			{
@@ -72,8 +77,12 @@ namespace ILib.AssetBundles
 			var dir = Path.GetDirectoryName(CachePath);
 			if (!Directory.Exists(dir))
 			{
+				Log.Trace("[ilib-abloader]create directory {0}", dir);
 				Directory.CreateDirectory(dir);
 			}
+
+			Log.Trace("[ilib-abloader] send web request {0}", Url);
+
 			m_WebRequest = UnityWebRequest.Get(Url);
 			var handler = new DownloadHandlerFile(CachePath);
 			handler.removeFileOnAbort = true;
@@ -81,6 +90,7 @@ namespace ILib.AssetBundles
 
 			var op = m_WebRequest.SendWebRequest();
 			op.completed += (o) => OnComplete();
+
 		}
 
 		public void Abort()
@@ -89,14 +99,15 @@ namespace ILib.AssetBundles
 			{
 				m_WebRequest?.Abort();
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
-				ABLoader.LogError(ex);
+				Log.Exception(ex);
 			}
 		}
 
 		void OnComplete()
 		{
+			Log.Trace("[ilib-abloader] complete web request {0}", Url);
 			m_Hander?.OnComplete(this);
 			if (m_WebRequest == null) return;
 			var error = m_WebRequest.error;
@@ -113,7 +124,7 @@ namespace ILib.AssetBundles
 				}
 				finally
 				{
-					Fail(new System.Exception(error));
+					Fail(new Exception(error));
 				}
 			}
 			m_WebRequest = null;
@@ -126,7 +137,7 @@ namespace ILib.AssetBundles
 			OnSuccess = null;
 		}
 
-		void Fail(System.Exception ex)
+		void Fail(Exception ex)
 		{
 			m_IsFail = true;
 			Cache.TryDelete(Name);

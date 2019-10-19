@@ -6,6 +6,8 @@ using System;
 
 namespace ILib.AssetBundles
 {
+	using Logger;
+
 	//コルーチン及びUpdateを使わない形のアセットバンドルのローダーです。
 	//内部的にコールバック地獄になっているので、バグに対する耐久が低い点と解放漏れをやらかしてリークしやすいのが特徴です。
 	//手軽の利用できるという点ではまあまあ？　縛りプレイで作っただけなので、実用にはイマイチ機能が足りていない。
@@ -88,7 +90,7 @@ namespace ILib.AssetBundles
 			set
 			{
 				s_UnloadMode = value;
-				AutoUnloader.ChangeModel(value);
+				AutoUnloader.ChangeMode(value);
 			}
 		}
 
@@ -120,7 +122,8 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static CustomYieldInstruction Initialize(ILoadOperator loadOperator, Action onSuccess, Action<Exception> onFail)
 		{
-			AutoUnloader.ChangeModel(s_UnloadMode);
+			Log.Init();
+			AutoUnloader.ChangeMode(s_UnloadMode);
 			if (s_Instance == null) s_Instance = new ABLoaderInstance();
 			return s_Instance.Initialize(loadOperator, s_MaxDownloadCount, s_MaxLoadCount, onSuccess, onFail);
 		}
@@ -150,7 +153,7 @@ namespace ILib.AssetBundles
 		/// </summary>
 		public static CustomYieldInstruction CacheClear(Action onComplete = null)
 		{
-			LogAssert(s_Instance != null);
+			Log.Assert(s_Instance != null);
 			return s_Instance.CacheClear(() =>
 			{
 				Cache.Reset();
@@ -228,7 +231,7 @@ namespace ILib.AssetBundles
 				onComplete?.Invoke(true);
 				return () => 1;
 			}
-			LogAssert(names.Length > 0);
+			Log.Assert(names.Length > 0);
 #endif
 			return s_Instance.Download(names, onComplete, onFail);
 		}
@@ -283,7 +286,7 @@ namespace ILib.AssetBundles
 				}
 				catch (Exception ex)
 				{
-					LogError(ex);
+					Log.Exception(ex);
 				}
 				return;
 			}
@@ -356,60 +359,6 @@ namespace ILib.AssetBundles
 		{
 			s_Instance?.Unload();
 		}
-
-		static Action<Exception> s_onLogError;
-		static Action<string> s_OnLogAssert;
-
-		/// <summary>
-		/// 例外をハンドリングした際に吐き出すログを出力を指定します。
-		/// 標準のログでそのまま出力されたくない場合に利用してください。
-		/// </summary>
-		public static void HandleErrorLog(Action<Exception> onError)
-		{
-			s_onLogError = onError;
-		}
-
-		/// <summary>
-		///	Assertの出力を指定します。
-		/// 標準のログでそのまま出力されたくない場合に利用してください。
-		/// </summary>
-		public static void HandleAssert(Action<string> onAssert)
-		{
-			s_OnLogAssert = onAssert;
-		}
-
-		internal static void LogError(Exception ex)
-		{
-			if (s_onLogError != null)
-			{
-				s_onLogError(ex);
-			}
-			else
-			{
-				Debug.LogError(ex);
-			}
-		}
-
-		internal static void LogAssert(bool condition)
-		{
-			if (s_OnLogAssert == null)
-			{
-				Debug.Assert(condition);
-			}
-		}
-
-		internal static void LogAssert(bool condition, string message)
-		{
-			if (s_OnLogAssert == null)
-			{
-				Debug.Assert(condition, message);
-			}
-			else if (condition)
-			{
-				s_OnLogAssert(message);
-			}
-		}
-
 
 	}
 

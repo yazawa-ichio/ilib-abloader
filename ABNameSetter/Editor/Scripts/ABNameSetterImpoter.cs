@@ -14,7 +14,7 @@ namespace ILib.AssetBundles.NameSetter
 			{
 				return;
 			}
-			if (!path.Contains(Application.dataPath))
+			if (!path.StartsWith("Assets"))
 			{
 				return;
 			}

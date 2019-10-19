@@ -6,6 +6,8 @@ using UnityEngine;
 
 namespace ILib.AssetBundles
 {
+	using Logger;
+
 	/// <summary>
 	/// ABLoaderの実体です
 	/// </summary>
@@ -26,15 +28,19 @@ namespace ILib.AssetBundles
 		public void SetMaxDownloadCount(int count)
 		{
 			m_Downloader.MaxCount = count;
+			Log.Debug("[ilib-abloader] set max download count {0}.", count);
 		}
 
 		public void SeMaxLoadCount(int count)
 		{
 			m_Loader.MaxCount = count;
+			Log.Debug("[ilib-abloader] set max load count {0}.", count);
 		}
 
 		public CustomYieldInstruction Initialize(ILoadOperator loadOperator, int maxDownloadCount, int maxLoadCount, Action onSuccess, Action<Exception> onFail)
 		{
+			Log.Debug("[ilib-abloader] Initialize {0}.", loadOperator);
+
 			bool complete = false;
 			var wait = new WaitUntil(() => complete);
 
@@ -42,7 +48,8 @@ namespace ILib.AssetBundles
 			if (State != ABLoaderState.None)
 			{
 				complete = true;
-				onFail?.Invoke(new InvalidOperationException("use ABLoader.Stop()"));
+				Log.Error("[ilib-abloader] already initialized. use ABLoader.Stop()");
+				onFail?.Invoke(new InvalidOperationException("already initialized. use ABLoader.Stop()"));
 				return wait;
 			}
 
@@ -55,6 +62,7 @@ namespace ILib.AssetBundles
 #if UNITY_EDITOR
 			if (ABLoader.UseEditorAsset)
 			{
+				Log.Debug("[ilib-abloader] use editor asset mode.");
 				State = ABLoaderState.Active;
 				onSuccess?.Invoke();
 				complete = true;
@@ -83,7 +91,12 @@ namespace ILib.AssetBundles
 
 		public CustomYieldInstruction Stop(Action onComplete)
 		{
-			if (State == ABLoaderState.Abort) new InvalidOperationException("current aborting.");
+			if (State == ABLoaderState.Abort)
+			{
+				Log.Warning("[ilib-abloader] current aborting.");
+				throw new InvalidOperationException("current aborting.");
+			}
+			Log.Debug("[ilib-abloader] start aborting.");
 			bool complete = false;
 			State = ABLoaderState.Abort;
 			//ダウンロードの中断は即実行される
@@ -91,6 +104,7 @@ namespace ILib.AssetBundles
 			{
 				m_Loader.Abort(() =>
 				{
+					Log.Debug("[ilib-abloader] complete abort.");
 					lock (m_UnloadList)
 					{
 						m_UnloadList.Clear();
@@ -105,6 +119,7 @@ namespace ILib.AssetBundles
 						container.Dispose();
 					}
 					m_Container.Clear();
+					Log.Debug("[ilib-abloader] unload all assetbundle.");
 					State = ABLoaderState.Stop;
 					complete = true;
 					onComplete?.Invoke();
@@ -115,6 +130,7 @@ namespace ILib.AssetBundles
 
 		public CustomYieldInstruction CacheClear(Action onComplete)
 		{
+			Log.Trace("[ilib-abloader] start cache clear");
 			return Stop(() =>
 			{
 				Cache.DeleteAll();
@@ -125,13 +141,13 @@ namespace ILib.AssetBundles
 		public bool IsCache(string name)
 		{
 			if (m_Downloader.HasRequest(name)) return false;
-			return System.IO.File.Exists(Cache.GetLoadPath(name, m_BundleData.GetHash(name)));
+			return Cache.IsExists(name, m_BundleData.GetHash(name));
 		}
 
 		public bool IsCache(string name, string hash)
 		{
 			if (m_Downloader.HasRequest(name)) return false;
-			return System.IO.File.Exists(Cache.GetLoadPath(name, hash));
+			return Cache.IsExists(name, hash);
 		}
 
 		public IEnumerable<string> GetIncludedDependList(string[] names)
@@ -183,13 +199,14 @@ namespace ILib.AssetBundles
 
 		public Func<float> Download(string[] names, Action<bool> onComplete, Action<Exception> onFail = null)
 		{
-			
 			names = GetDownloadList(names);
 
 			//すでに依存関係を考慮している
 			long size = GetSize(names, ignoreDpend: true);
 			int successCount = 0;
 			int completeCount = 0;
+
+			Log.Debug("[ilib-abloader] start download. size {0}", size);
 
 			DownloadRequest[] requests = new DownloadRequest[names.Length];
 			Func<float> onProgress = () =>
@@ -242,13 +259,14 @@ namespace ILib.AssetBundles
 
 		public void LoadContainer(string name, Action<BundleContainerRef> onSuccess, Action<Exception> onFail)
 		{
-
 			BundleContainer container;
 			if (m_Container.TryGetValue(name, out container))
 			{
 				container.SetEvent(onSuccess, onFail);
 				return;
 			}
+
+			Log.Trace("[ilib-abloader] start load container : {0}", name);
 
 			string[] deps;
 			var length = m_BundleData.GetAllDepends(name, out deps);
@@ -271,7 +289,7 @@ namespace ILib.AssetBundles
 			BundleRef bundleRef = null;
 			if (m_LoadedBundles.TryGetValue(name, out bundleRef))
 			{
-				ABLoader.LogAssert(bundleRef != null);
+				Log.Assert(bundleRef != null);
 				if (bundleRef.Bundle != null)
 				{
 					onLoad(bundleRef);
@@ -281,6 +299,7 @@ namespace ILib.AssetBundles
 				{
 					//管理していない形でアンロードされた
 					m_LoadedBundles.Remove(name);
+					Log.Warning("[ilib-abloader] unhandle unloaded name {0}.", name);
 				}
 			}
 
@@ -306,6 +325,8 @@ namespace ILib.AssetBundles
 				return;
 			}
 
+			Log.Trace("[ilib-abloader] start load request. name {0}, hash {1}, crc {2}", name, hash, crc);
+
 			op = m_LoadOperator.Load(name, hash);
 			op.Init(name, hash, crc, this);
 			op.OnSuccess += onLoad;
@@ -328,9 +349,13 @@ namespace ILib.AssetBundles
 			var ex = Cache.TryDelete(name);
 			if (ex != null)
 			{
+				Log.Warning("[ilib-abloader] cache delete error name {0}, {1}", name, ex);
 				onFail?.Invoke(ex);
 				return req;
 			}
+
+			Log.Trace("[ilib-abloader] start download request. name {0}, hash {1}, url {2}", name, hash, url);
+
 
 			//リクエストを作成
 			req = new DownloadRequest
@@ -351,6 +376,8 @@ namespace ILib.AssetBundles
 		{
 			lock (m_UnloadList)
 			{
+				if (m_UnloadList.Count == 0) return;
+
 				foreach (var bundleRef in m_UnloadList)
 				{
 					if (!bundleRef.HasRef)

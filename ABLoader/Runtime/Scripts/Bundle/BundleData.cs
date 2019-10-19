@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace ILib.AssetBundles
 {
+	using Logger;
+
 	public interface IBundleData
 	{
 		string[] GetAllNames();
@@ -33,7 +35,7 @@ namespace ILib.AssetBundles
 		public string GetHash(string name)
 		{
 			var hash = m_Manifest.GetAssetBundleHash(name);
-			ABLoader.LogAssert(hash != EmptyHash);
+			Log.Assert(hash != EmptyHash, "hash is Empty. name {0}", name);
 			return hash.ToString();
 		}
 

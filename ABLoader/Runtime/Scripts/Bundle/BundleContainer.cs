@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace ILib.AssetBundles
 {
+	using Logger;
+
 	internal interface IBundleContainer
 	{
 		T LoadAsset<T>(string assetName) where T : UnityEngine.Object;
@@ -123,7 +125,7 @@ namespace ILib.AssetBundles
 			{
 				//例外を吐いた場合は即解放
 				containerRef.Dispose();
-				ABLoader.LogError(ex);
+				Log.Exception(ex);
 			}
 		}
 
@@ -140,6 +142,7 @@ namespace ILib.AssetBundles
 
 		public void SetUnloadAll(bool unloadAll, bool depend = false)
 		{
+			Log.Debug("[ilib-abloader] Name {0}, set unloadAll : {1}, depend{2}.", Name, unloadAll, depend);
 			m_BundleRef.SetUnloadAll(unloadAll);
 			if (depend && m_Deps != null)
 			{
@@ -193,11 +196,13 @@ namespace ILib.AssetBundles
 
 		public T LoadAsset<T>(string assetName) where T : UnityEngine.Object
 		{
+			Log.Trace("[ilib-abloader] Name {0}, LoadAsset<{1}>({2}).", Name, typeof(T), assetName);
 			return GetBundle().LoadAsset<T>(assetName);
 		}
 
 		public void LoadAssetAsync<T>(string assetName, Action<T> onSuccess) where T : UnityEngine.Object
 		{
+			Log.Trace("[ilib-abloader] Name {0}, LoadAssetAsync<{1}>({2}).", Name, typeof(T), assetName);
 			var op = GetBundle().LoadAssetAsync<T>(assetName);
 			op.completed += (o) =>
 			{
@@ -207,11 +212,13 @@ namespace ILib.AssetBundles
 
 		public void LoadScene(string sceneName, UnityEngine.SceneManagement.LoadSceneMode mode)
 		{
+			Log.Debug("[ilib-abloader] Name {0}, load scene {1}, mode {2}", Name, sceneName, mode);
 			UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName, mode);
 		}
 
 		public void LoadSceneAsync(string sceneName, UnityEngine.SceneManagement.LoadSceneMode mode, Action onSuccess)
 		{
+			Log.Debug("[ilib-abloader] Name {0}, load scene {1}, mode {2}", Name, sceneName, mode);
 			var op = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, mode);
 			op.completed += o => onSuccess?.Invoke();
 		}

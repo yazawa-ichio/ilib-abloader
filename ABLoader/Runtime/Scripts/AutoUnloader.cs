@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace ILib.AssetBundles
 {
+	using Logger;
+
 	public class AutoUnloader 
 	{
 		class AutoUnloaderUpdater : MonoBehaviour
@@ -22,8 +24,10 @@ namespace ILib.AssetBundles
 
 		static AutoUnloaderUpdater s_Updater;
 
-		public static void ChangeModel(UnloadMode mode)
+		public static void ChangeMode(UnloadMode mode)
 		{
+			Log.Trace("[ilib-abloader]AutoUnloader change mode:{0}", mode);
+
 			if (mode != UnloadMode.Auto)
 			{
 				if (s_Updater != null)

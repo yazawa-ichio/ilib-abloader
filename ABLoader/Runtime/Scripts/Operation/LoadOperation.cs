@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace ILib.AssetBundles
 {
+	using Logger;
+
 	public abstract class LoadOperation : IRequest
 	{
 		ABLoaderInstance m_Owner;
@@ -51,6 +53,7 @@ namespace ILib.AssetBundles
 
 		protected void Success(AssetBundle bundle)
 		{
+			Log.Trace("[ilib-abloader] load success {0}.", Name);
 			IsRunning = false;
 			m_Hander.OnComplete(this);
 			var bundleRef = m_Owner.CreateBundleRef(Name, bundle);
@@ -61,6 +64,7 @@ namespace ILib.AssetBundles
 
 		internal protected void Fail(System.Exception ex)
 		{
+			Log.Warning("[ilib-abloader] load fail {0}. {1}", Name, ex);
 			IsRunning = false;
 			Cache.TryDelete(Name, Hash);
 			m_Hander.OnComplete(this);
