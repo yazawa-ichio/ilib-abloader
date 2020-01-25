@@ -13,5 +13,6 @@ namespace ILib.AssetBundles
 		string RequestUrl(string name, string hash);
 		string LoadPath(string name, string hash);
 		LoadOperation Load(string name, string hash);
+		void CompleteLoad(LoadOperation op);
 	}
 }

@@ -296,6 +296,18 @@ namespace ILib.AssetBundles
 		}
 
 		/// <summary>
+		/// アセットバンドルをロードします。
+		/// BundleContainerRefからアセットをロードし、不要になった際にDisposeを実行してください。
+		/// UnloadMode.ImmediatelyモードでDisposeを実行し忘れるとバンドルがリークします。
+		/// </summary>
+		public static BundleLoading Load(string name, LoadingConfig config = null)
+		{
+			var loading = new BundleLoading(name);
+			if (config != null) loading.SetConfig(config);
+			return loading;
+		}
+
+		/// <summary>
 		/// アセットバンドルからアセットを同期ロードします。
 		/// コンテナへの参照は自動で解除します。
 		/// </summary>
@@ -326,6 +338,17 @@ namespace ILib.AssetBundles
 		}
 
 		/// <summary>
+		/// アセットバンドルからアセットを非同期ロードします。
+		/// コンテナへの参照は自動で解除します。
+		/// </summary>
+		public static AssetLoading<T> LoadAsset<T>(string name, string assetName, LoadingConfig config = null) where T : UnityEngine.Object
+		{
+			var loading = new AssetLoading<T>(name, assetName);
+			if (config != null) loading.SetConfig(config);
+			return loading;
+		}
+
+		/// <summary>
 		/// アセットバンドルからシーンを同期ロードします。
 		/// コンテナへの参照は自動で解除します。
 		/// </summary>
@@ -353,6 +376,17 @@ namespace ILib.AssetBundles
 					onSuccess?.Invoke();
 				});
 			}, onFail);
+		}
+
+		/// <summary>
+		/// アセットバンドルからシーンを非同期ロードします。
+		/// コンテナへの参照は自動で解除します。
+		/// </summary>
+		public static SceneLoading LoadScene(string name, string sceneName, LoadingConfig config = null)
+		{
+			var loading = new SceneLoading(name, sceneName);
+			if (config != null) loading.SetConfig(config);
+			return loading;
 		}
 
 		public static void Unload()

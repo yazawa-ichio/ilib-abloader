@@ -124,7 +124,7 @@ namespace ILib.AssetBundles
 				}
 				finally
 				{
-					Fail(new Exception(error));
+					Fail(new DownloadException(error, m_WebRequest));
 				}
 			}
 			m_WebRequest = null;

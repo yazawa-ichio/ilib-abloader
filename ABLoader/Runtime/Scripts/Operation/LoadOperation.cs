@@ -12,18 +12,32 @@ namespace ILib.AssetBundles
 		internal System.Action<BundleRef> OnSuccess;
 		internal System.Action<System.Exception> OnFail;
 		IRequestHander m_Hander;
+		ILoadOperator m_LoadOperator;
 
 		public string Name { get; private set; }
 		public string Hash { get; private set; }
 		public uint CRC { get; private set; }
 		public bool IsRunning { get; private set; }
 
-		internal void Init(string name, string hash, uint crc, ABLoaderInstance owner)
+		internal void Init(ILoadOperator loadOperator,string name, string hash, uint crc, ABLoaderInstance owner)
 		{
+			m_LoadOperator = loadOperator;
 			Name = name;
 			Hash = hash;
 			CRC = crc;
 			m_Owner = owner;
+		}
+
+		public virtual void Reset()
+		{
+			m_Owner = null;
+			OnSuccess = null;
+			OnFail = null;
+			m_Hander = null;
+			Name = null;
+			Hash = null;
+			CRC = 0;
+			IsRunning = false;
 		}
 
 		void IRequest.SetHander(IRequestHander hander)
@@ -60,6 +74,7 @@ namespace ILib.AssetBundles
 			bundleRef.AddRef();
 			OnSuccess(bundleRef);
 			bundleRef.RemoveRef();
+			m_LoadOperator?.CompleteLoad(this);
 		}
 
 		internal protected void Fail(System.Exception ex)
@@ -69,6 +84,7 @@ namespace ILib.AssetBundles
 			Cache.TryDelete(Name, Hash);
 			m_Hander.OnComplete(this);
 			OnFail(ex);
+			m_LoadOperator?.CompleteLoad(this);
 		}
 
 	}

@@ -56,6 +56,14 @@ namespace ILib.AssetBundles
 			m_Container.LoadAssetAsync<T>(assetName, onSuccess);
 		}
 
+		public ContainerAssetLoading<T> LoadAssetAsync<T>(string assetName) where T : UnityEngine.Object
+		{
+			if (m_Disposed) throw new System.InvalidOperationException("disposed bundle container ref");
+			var ret = new ContainerAssetLoading<T>();
+			m_Container.LoadAssetAsync<T>(assetName, ret.SetResult);
+			return ret;
+		}
+
 		public void LoadScene(string sceneName, UnityEngine.SceneManagement.LoadSceneMode mode)
 		{
 			if (m_Disposed) throw new System.InvalidOperationException("disposed bundle container ref");
@@ -66,6 +74,14 @@ namespace ILib.AssetBundles
 		{
 			if (m_Disposed) throw new System.InvalidOperationException("disposed bundle container ref");
 			m_Container.LoadSceneAsync(sceneName, mode, onSuccess);
+		}
+
+		public ContainerSceneLoading LoadSceneAsync(string sceneName, UnityEngine.SceneManagement.LoadSceneMode mode)
+		{
+			if (m_Disposed) throw new System.InvalidOperationException("disposed bundle container ref");
+			var ret = new ContainerSceneLoading();
+			m_Container.LoadSceneAsync(sceneName, mode, ret.SetResult);
+			return ret;
 		}
 
 	}

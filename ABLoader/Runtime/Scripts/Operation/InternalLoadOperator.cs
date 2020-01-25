@@ -10,6 +10,7 @@ namespace ILib.AssetBundles
 		string m_Path;
 		string m_Manifest;
 		string m_ManifestAssetName;
+		Queue<FileLoadOperation> m_OperationPool = new Queue<FileLoadOperation>();
 
 		public InternalLoadOperator(string loadPath, string manifest, string manifestAssetName = "AssetBundleManifest")
 		{
@@ -46,7 +47,20 @@ namespace ILib.AssetBundles
 
 		public LoadOperation Load(string name, string hash)
 		{
+			if (m_OperationPool.Count > 0)
+			{
+				return m_OperationPool.Dequeue();
+			}
 			return new FileLoadOperation();
+		}
+
+		public void CompleteLoad(LoadOperation op)
+		{
+			if (m_OperationPool.Count < ABLoader.MaxLoadCount * 2)
+			{
+				op.Reset();
+				m_OperationPool.Enqueue(op as FileLoadOperation);
+			}
 		}
 
 	}

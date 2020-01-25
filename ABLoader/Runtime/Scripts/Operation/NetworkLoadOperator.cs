@@ -13,6 +13,7 @@ namespace ILib.AssetBundles
 		string m_Manifest;
 		string m_Version;
 		string m_ManifetAssetName;
+		Queue<FileLoadOperation> m_OperationPool = new Queue<FileLoadOperation>();
 
 		public NetworkLoadOperator(string url, string cache, string manifest, string version, string manifetAssetName = "AssetBundleManifest")
 		{
@@ -52,7 +53,21 @@ namespace ILib.AssetBundles
 
 		public LoadOperation Load(string name, string hash)
 		{
+			if (m_OperationPool.Count > 0)
+			{
+				return m_OperationPool.Dequeue();
+			}
 			return new FileLoadOperation();
+		}
+
+		public void CompleteLoad(LoadOperation op)
+		{
+			//最大ロード数の二倍はプールする
+			if (m_OperationPool.Count < ABLoader.MaxLoadCount * 2)
+			{
+				op.Reset();
+				m_OperationPool.Enqueue(op as FileLoadOperation);
+			}
 		}
 
 	}

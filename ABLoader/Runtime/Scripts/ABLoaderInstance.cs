@@ -328,7 +328,7 @@ namespace ILib.AssetBundles
 			Log.Trace("[ilib-abloader] start load request. name {0}, hash {1}, crc {2}", name, hash, crc);
 
 			op = m_LoadOperator.Load(name, hash);
-			op.Init(name, hash, crc, this);
+			op.Init(m_LoadOperator, name, hash, crc, this);
 			op.OnSuccess += onLoad;
 			op.OnFail += onFail;
 			m_Loader.Request(op);

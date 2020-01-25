@@ -9,7 +9,6 @@ namespace ILib.AssetBundles
 	{
 
 		bool m_Abort;
-		bool m_Error;
 		AssetBundleCreateRequest m_Loading;
 
 		protected override void Start()
@@ -36,7 +35,7 @@ namespace ILib.AssetBundles
 			}
 			else
 			{
-				Fail(new System.Exception("load fail."));
+				Fail(new FileLoadException($"{Name} load fail. path:{GetLoadPath()}", Name, GetLoadPath()));
 			}
 			m_Loading = null;
 		}
@@ -58,9 +57,15 @@ namespace ILib.AssetBundles
 			};
 		}
 
+		public override void Reset()
+		{
+			base.Reset();
+			m_Abort = false;
+			m_Loading = null;
+		}
+
 		public override void Dispose()
 		{
-
 		}
 	}
 
