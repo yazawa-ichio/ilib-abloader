@@ -57,7 +57,7 @@ namespace ILib.AssetBundles.NameSetter
 					ctx.OnGUI();
 				}
 			}
-			
+
 		}
 
 		void AddMenu()

@@ -8,7 +8,7 @@ namespace ILib.AssetBundles.NameSetter
 
 	public static class ABNameSetterTools
 	{
-		[MenuItem("Assets/Create/ILib/NameSetter",validate = true)]
+		[MenuItem("Assets/Create/ILib/NameSetter", validate = true)]
 		static bool CreateValidate()
 		{
 			var selected = Selection.activeObject;

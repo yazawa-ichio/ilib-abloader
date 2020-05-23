@@ -9,7 +9,7 @@ namespace ILib.AssetBundles.ExManifest.Tools
 	using NameSetter;
 	using System.IO;
 
-	public class GUIDReferenceSetterContext : SetterContext , IReferenceCollector
+	public class GUIDReferenceSetterContext : SetterContext, IReferenceCollector
 	{
 		public override string Description => "ExManifetビルド時にGUIDを参照として登録します";
 

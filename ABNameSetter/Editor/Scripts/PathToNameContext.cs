@@ -141,7 +141,7 @@ namespace ILib.AssetBundles.NameSetter
 				return;
 			}
 
-			if (!string.IsNullOrEmpty(startDirPath) && startDirPath[startDirPath.Length-1] != '/')
+			if (!string.IsNullOrEmpty(startDirPath) && startDirPath[startDirPath.Length - 1] != '/')
 			{
 				startDirPath += "/";
 			}

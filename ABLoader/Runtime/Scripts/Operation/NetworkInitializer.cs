@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ILib.AssetBundles
 {
-	
+
 	public class NetworkInitializer : Initializer
 	{
 		static readonly string s_CacheName = "__BundleData";

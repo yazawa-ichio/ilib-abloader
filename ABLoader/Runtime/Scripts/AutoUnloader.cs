@@ -6,7 +6,7 @@ namespace ILib.AssetBundles
 {
 	using Logger;
 
-	public class AutoUnloader 
+	public class AutoUnloader
 	{
 		class AutoUnloaderUpdater : MonoBehaviour
 		{

@@ -19,7 +19,7 @@ namespace ILib.AssetBundles
 		public uint CRC { get; private set; }
 		public bool IsRunning { get; private set; }
 
-		internal void Init(ILoadOperator loadOperator,string name, string hash, uint crc, ABLoaderInstance owner)
+		internal void Init(ILoadOperator loadOperator, string name, string hash, uint crc, ABLoaderInstance owner)
 		{
 			m_LoadOperator = loadOperator;
 			Name = name;

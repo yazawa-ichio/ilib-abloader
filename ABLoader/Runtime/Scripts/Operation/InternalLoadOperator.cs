@@ -18,7 +18,7 @@ namespace ILib.AssetBundles
 			m_Manifest = manifest;
 			m_ManifestAssetName = manifestAssetName;
 		}
-		
+
 		public Initializer Init()
 		{
 			var path = LoadPath(m_Manifest, "");

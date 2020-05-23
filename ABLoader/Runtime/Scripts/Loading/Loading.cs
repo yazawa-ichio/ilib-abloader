@@ -22,7 +22,7 @@ namespace ILib.AssetBundles
 
 		Action<Exception> ErrorHandle { get; set; }
 
-		Exception Error { get;  }
+		Exception Error { get; }
 
 		bool IsCompleted { get; }
 
@@ -35,11 +35,11 @@ namespace ILib.AssetBundles
 
 	public abstract class Loading<T> : ILoading
 	{
-        public string BundleName { get; private set; }
+		public string BundleName { get; private set; }
 
-        public string AssetName { get; private set; }
+		public string AssetName { get; private set; }
 
-        public bool IgnoreError { get; set; }
+		public bool IgnoreError { get; set; }
 
 		public bool ForceAwaiterCompleteIfError { get; set; }
 
@@ -50,9 +50,9 @@ namespace ILib.AssetBundles
 		public Action<Exception> ErrorHandle { get; set; }
 
 		public T Result { get; private set; }
-		
+
 		public Exception Error { get; private set; }
-		
+
 		public bool IsCompleted
 		{
 			get
@@ -69,7 +69,7 @@ namespace ILib.AssetBundles
 		bool m_Success;
 		Action<T> m_Load;
 		Action m_AwaiterComplete;
-        int m_RetryCount;
+		int m_RetryCount;
 
 		protected Loading(string bundleName, string assetName)
 		{

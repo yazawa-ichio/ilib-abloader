@@ -35,7 +35,7 @@ namespace ILib.AssetBundles.ExManifest
 			{
 				Directory.CreateDirectory(m_Setting.OutputPath);
 			}
-			 m_Current = BuildPipeline.BuildAssetBundles(m_Setting.OutputPath, builds, m_Setting.Options, m_Setting.BuildTarget);
+			m_Current = BuildPipeline.BuildAssetBundles(m_Setting.OutputPath, builds, m_Setting.Options, m_Setting.BuildTarget);
 
 			//ビルド時にコンパイルが走りアセットがアンロードされるので再ロードする必要がある
 			m_Cache = LoadCache();
@@ -75,7 +75,7 @@ namespace ILib.AssetBundles.ExManifest
 		ExManifestAsset CreateManifest(AssetBundleBuild[] builds)
 		{
 			var manifestAsset = ScriptableObject.CreateInstance<ExManifestAsset>();
-			
+
 			//新しいビルドとキャッシュのデータをマージする
 			Dictionary<string, DataEntry> entries = new Dictionary<string, DataEntry>();
 

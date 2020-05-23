@@ -9,7 +9,7 @@ namespace ILib.AssetBundles.ExManifest.Tools
 {
 	using NameSetter;
 
-	public class PathToTagSetterContext : SetterContext , ITagCollector
+	public class PathToTagSetterContext : SetterContext, ITagCollector
 	{
 		public override string Description => "ExManifetビルド時にタグを設定します";
 
