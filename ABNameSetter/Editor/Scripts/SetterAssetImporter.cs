@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using UnityEditor.Experimental.AssetImporters;
+
 
 namespace ILib.AssetBundles.NameSetter
 {
-	[ScriptedImporter(1, Ext)]
-	public class SetterAssetImporter : ScriptedImporter
+	[UnityEditor.AssetImporters.ScriptedImporter(1, Ext)]
+	public class SetterAssetImporter : UnityEditor.AssetImporters.ScriptedImporter
 	{
 		public const string Ext = "abNameSetter";
 
-		public override void OnImportAsset(AssetImportContext ctx)
+		public override void OnImportAsset(UnityEditor.AssetImporters.AssetImportContext ctx)
 		{
 			string text = System.IO.File.ReadAllText(ctx.assetPath);
 			SetterAsset asset = ScriptableObject.CreateInstance<SetterAsset>();
@@ -24,7 +24,7 @@ namespace ILib.AssetBundles.NameSetter
 	}
 
 	[CustomEditor(typeof(SetterAssetImporter))]
-	public class SetterAssetImporterEditor : ScriptedImporterEditor
+	public class SetterAssetImporterEditor : UnityEditor.AssetImporters.ScriptedImporterEditor
 	{
 		public override void OnInspectorGUI()
 		{
